@@ -1,0 +1,90 @@
+name: Build and Publish
+
+on: push
+
+jobs:
+  build:
+    name: Build
+
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@master
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Dependencies
+        run: |
+          pip install pipenv
+          pipenv install
+      - name: Build
+        run: |
+          mkdir -p dist
+          pipenv run gen-cfm.py gen
+      - name: Upload dist
+        uses: actions/upload-artifact@v1
+        with:
+          name: dist
+          path: dist
+
+  release:
+    name: Release
+    needs: build
+    if: startsWith(github.event.ref, 'refs/_tags')
+
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v1
+        with:
+          name: dist
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ""  # TODO get git commit messages here automatically
+          draft: true
+          prerelease: false
+      - name: Upload Release Asset
+        id: upload-release-asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/RDS-sanitized-snapshots.yml
+          asset_name: RDS-sanitized-snapshots.yml
+          asset_content_type: text/yaml
+
+  publish:
+    name: Publish to AWS
+    needs: build
+    if: startsWith(github.event.ref, 'refs/_tags')
+
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Download dist
+        uses: actions/download-artifact@v1
+        with:
+          name: dist
+      - uses: actions/checkout@master
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Set up AWS CLI
+        run: sudo pip install awscli
+      - name: Publish
+        env:
+          AWS_DEFAULT_REGION: us-east-1
+          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
+        run: |
+          aws serverlessrepo create-application-version --application-id arn:aws:serverlessrepo:us-east-1:${{ secrets.aws_account }}:applications/RDS-sanitized-snapshots --semantic-version ${GITHUB_REF##*/} --source-code-url https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} --template-body file://./dist/RDS-sanitized-snapshots.yml
+          aws serverlessrepo update-application --application-id arn:aws:serverlessrepo:us-east-1:${{ secrets.aws_account }}:applications/RDS-sanitized-snapshots --readme-body file://./README.md
