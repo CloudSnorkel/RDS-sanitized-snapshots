@@ -361,6 +361,24 @@ def add_schedule(template: troposphere.Template, state_machine: troposphere.step
     )
 
 
+def add_metadata(template: troposphere.Template, name, description):
+    template.set_metadata({
+        "AWS::ServerlessRepo::Application": {
+            "Name": name,
+            "Description": description,
+            "Author": "CloudSnorkel",
+            "SpdxLicenseId": "MIT",
+            "LicenseUrl": "LICENSE",
+            "ReadmeUrl": "README.md",
+            "Labels": ["rds", "snapshot", "sanitize"],
+            "HomePageUrl": "https://github.com/CloudSnorkel/RDS-sanitized-snapshots",
+            "SemanticVersion": "1.0.0",
+            "SourceCodeUrl": "https://github.com/CloudSnorkel/RDS-sanitized-snapshots",
+        }
+    })
+    template.set_transform("AWS::Serverless-2016-10-31")
+
+
 def generate_main_template():
     template = troposphere.Template("Sanitize and copy latest RDS snapshot to a different account")
 
@@ -403,5 +421,8 @@ def generate_main_template():
     # )
     state_machine = add_state_machine(template, function, cluster, tasks)
     add_schedule(template, state_machine)
+    add_metadata(template, "RDS-sanitized-snapshots",
+                 "Periodically take snapshots of RDS databases, sanitize them, and share with selected accounts. "
+                 "Useful for automation of production database copies for development or QA.")
 
     return template.to_yaml(clean_up=True, long_form=True)
