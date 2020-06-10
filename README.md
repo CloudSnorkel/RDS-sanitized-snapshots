@@ -7,7 +7,7 @@ created last year and was kind of kept in shape by random acts of kindness. Deve
 lets you create non-production databases with sanitized production data. Use the sanitization step to delete passwords,
 remove credit card numbers, eliminate PII, etc.  
 
-* Available for easy deployment on [AWS Serverless Application Repository]((https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:859319237877:applications~RDS-sanitized-snapshots)).
+* Available for easy deployment on [AWS Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:859319237877:applications~RDS-sanitized-snapshots).
 * Or get CloudFormation template directly from [GitHub releases](https://github.com/CloudSnorkel/RDS-sanitized-snapshots/releases).
 
 ### Overview
