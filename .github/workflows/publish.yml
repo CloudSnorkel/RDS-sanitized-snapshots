@@ -20,7 +20,7 @@ jobs:
       - name: Build
         run: |
           mkdir -p dist
-          pipenv run gen-cfm.py gen
+          pipenv run python gen-cfm.py gen
       - name: Upload dist
         uses: actions/upload-artifact@v1
         with:
