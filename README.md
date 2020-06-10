@@ -37,7 +37,7 @@ The step function does the following to create the snapshot:
 RDS-sanitized-snapshots is contained in one CloudFormation template and has no external dependencies but the RDS
 database itself. It is completely serverless, so you only ever pay for what you use.
 
-You can download the CloudFormation template and deploy it yourself, or do it using [Serverless Application Repository]((https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:859319237877:applications~RDS-sanitized-snapshots))
+You can download the CloudFormation template and deploy it yourself, or do it using [Serverless Application Repository](https://serverlessrepo.aws.amazon.com/applications/arn:aws:serverlessrepo:us-east-1:859319237877:applications~RDS-sanitized-snapshots).
 
 #### Parameters
 
