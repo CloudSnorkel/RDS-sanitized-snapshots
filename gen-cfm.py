@@ -97,7 +97,7 @@ def deploy(profile, stack_name, database, vpc, subnet, sql, share_account, new_s
             cf.update_stack(
                 StackName=stack_name,
                 TemplateBody=stack_template,
-                Capabilities=["CAPABILITY_IAM"],
+                Capabilities=["CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND"],
                 Parameters=parameters,
             )
         except botocore.exceptions.ClientError as e:
@@ -112,7 +112,7 @@ def deploy(profile, stack_name, database, vpc, subnet, sql, share_account, new_s
         cf.create_stack(
             StackName=stack_name,
             TemplateBody=stack_template,
-            Capabilities=["CAPABILITY_IAM"],
+            Capabilities=["CAPABILITY_IAM", "CAPABILITY_AUTO_EXPAND"],
             Parameters=parameters,
         )
         waiter = "stack_create_complete"
