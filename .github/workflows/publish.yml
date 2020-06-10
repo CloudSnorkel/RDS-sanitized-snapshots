@@ -69,11 +69,11 @@ jobs:
     runs-on: ubuntu-18.04
 
     steps:
-      - name: Download dist
-        uses: actions/download-artifact@v1
-        with:
-          name: dist
       - uses: actions/checkout@master
+      - name: Download dist
+          uses: actions/download-artifact@v1
+          with:
+            name: dist
       - name: Set up Python 3.7
         uses: actions/setup-python@v1
         with:
