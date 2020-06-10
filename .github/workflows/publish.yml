@@ -61,30 +61,4 @@ jobs:
           asset_name: RDS-sanitized-snapshots.yml
           asset_content_type: text/yaml
 
-  publish:
-    name: Publish to AWS
-    needs: build
-    if: startsWith(github.event.ref, 'refs/tags')
-
-    runs-on: ubuntu-18.04
-
-    steps:
-      - uses: actions/checkout@master
-      - name: Download dist
-        uses: actions/download-artifact@v1
-        with:
-          name: dist
-      - name: Set up Python 3.7
-        uses: actions/setup-python@v1
-        with:
-          python-version: 3.7
-      - name: Set up AWS CLI
-        run: sudo pip install awscli
-      - name: Publish
-        env:
-          AWS_DEFAULT_REGION: us-east-1
-          AWS_ACCESS_KEY_ID: ${{ secrets.aws_access_key_id }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.aws_secret_access_key }}
-        run: |
-          aws serverlessrepo create-application-version --application-id arn:aws:serverlessrepo:us-east-1:${{ secrets.aws_account }}:applications/RDS-sanitized-snapshots --semantic-version ${GITHUB_REF##*/} --source-code-url https://github.com/${GITHUB_REPOSITORY}/commit/${GITHUB_SHA} --template-body file://./dist/RDS-sanitized-snapshots.yml
-          aws serverlessrepo update-application --application-id arn:aws:serverlessrepo:us-east-1:${{ secrets.aws_account }}:applications/RDS-sanitized-snapshots --readme-body file://./README.md
+# TODO upload to S3 and publish quick create links?
