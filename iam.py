@@ -15,6 +15,7 @@ HANDLER_POLICIES = [
                     "Sid": "OriginalDB",
                     "Effect": "Allow",
                     "Action": [
+                        troposphere.If("KmsEmpty", troposphere.NoValue, "rds:CopyDBSnapshot"),
                         "rds:DescribeDBInstances",
                         "rds:DescribeDBSnapshots",
                         "rds:CreateDBSnapshot",
@@ -22,6 +23,7 @@ HANDLER_POLICIES = [
                     "Resource": [
                         troposphere.Sub(
                             "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:db:${Db}"),
+                        # TODO only allow access to all snapshots when using latest snapshot option
                         troposphere.Sub(
                             "arn:${AWS::Partition}:rds:${AWS::Region}:${AWS::AccountId}:snapshot:*"),
                     ]
@@ -70,7 +72,20 @@ HANDLER_POLICIES = [
                             ]
                         }
                     }
-                }
+                },
+                troposphere.If(
+                    "KmsEmpty",
+                    troposphere.NoValue,
+                    {
+                        "Sid": "Copy",
+                        "Effect": "Allow",
+                        "Action": [
+                            "kms:CreateGrant",
+                            "kms:DescribeKey",
+                        ],
+                        "Resource": troposphere.Ref("KMS"),
+                    }
+                ),
             ]
         }
     )

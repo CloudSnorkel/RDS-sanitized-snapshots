@@ -254,6 +254,7 @@ def add_state_machine(template, function: troposphere.awslambda.Function, cluste
         "new_snapshot": "${NewSnapshot}",
         "shared_accounts": ["${ShareAccountsJoined}"],
         "snapshot_format": "${SnapshotFormat}",
+        "kms": "${KMS}",
     }
 
     # TODO create add_choice()
@@ -275,8 +276,24 @@ def add_state_machine(template, function: troposphere.awslambda.Function, cluste
     }
 
     add_state("TakeSnapshot", "WaitForSnapshot", catch_state="ErrorCleanup")
-    add_waiting_state("WaitForSnapshot", "CreateTempDatabase", catch_state="ErrorCleanup")
-    add_state("FindLatestSnapshot", "CreateTempDatabase", catch_state="ErrorCleanup")
+    add_waiting_state("WaitForSnapshot", "ShouldEncrypt", catch_state="ErrorCleanup")
+    add_state("FindLatestSnapshot", "ShouldEncrypt", catch_state="ErrorCleanup")
+
+    states["ShouldEncrypt"] = {
+        "Type": "Choice",
+        "Choices": [
+            {
+                "Variable": "$.kms",
+                "StringEquals": "",
+                "Next": "CreateTempDatabase",
+            },
+        ],
+        "Default": "Encrypt",
+    }
+
+    add_state("Encrypt", "WaitForEncrypt", catch_state="ErrorCleanup")
+    add_waiting_state("WaitForEncrypt", "CreateTempDatabase", catch_state="ErrorCleanup")
+
     add_state("CreateTempDatabase", "WaitForTempDatabase", catch_state="ErrorCleanup")
     add_waiting_state("WaitForTempDatabase", "SetTempPassword", catch_state="ErrorCleanup")
     add_state("SetTempPassword", "WaitForPassword", catch_state="ErrorCleanup")
@@ -375,9 +392,19 @@ def generate_main_template():
                   "Options", Type="List<String>", Default="")
     add_parameter(template, "SnapshotFormat", "Snapshot name format using Python .format() function",
                   "Options", Type="String", Default="{database_identifier:.42}-sanitized-{date:%Y-%m-%d}")
+    add_parameter(template, "KMS", "KMS key id to re-encrypt snapshots (leave empty to not encrypt)",
+                  "Options", Type="String", Default="")
     add_parameter(template, "VpcId", "VPC for temporary database", "Network", Type="AWS::EC2::VPC::Id")
     add_parameter(template, "SubnetIds", "Subnets for temporary database (at least two)", "Network",
                   Type="List<AWS::EC2::Subnet::Id>")
+
+    template.add_condition(
+        "KmsEmpty",
+        troposphere.Equals(
+            troposphere.Ref("KMS"),
+            ""
+        )
+    )
 
     troposphere.rds.DBSubnetGroup(
         "SubnetGroup", template,

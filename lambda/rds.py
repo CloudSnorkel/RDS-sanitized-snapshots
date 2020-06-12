@@ -49,7 +49,8 @@ def state_function(name):
 def initialize(state, uid):
     orig_db = rds_client.describe_db_instances(DBInstanceIdentifier=state["db_identifier"])["DBInstances"][0]
     state["engine"] = orig_db["Engine"]
-    state["temporary_snapshot_id"] = state["db_identifier"][:55] + "-" + secrets.token_hex(5)
+    state["temp_snapshot_id"] = state["db_identifier"][:55] + "-" + secrets.token_hex(5)
+    state["temp_snapshot_id2"] = state["db_identifier"][:55] + "-" + secrets.token_hex(5)
     state["temp_db_id"] = state["db_identifier"][:55] + "-" + secrets.token_hex(5)
     state["target_snapshot_id"] = state["db_identifier"][:55] + "-" + secrets.token_hex(5)
     tsid = state["target_snapshot_id"] = state["snapshot_format"].format(
@@ -60,6 +61,11 @@ def initialize(state, uid):
     if not re.match("[a-z][a-z0-9\\-]{1,62}", tsid, re.I) or "--" in tsid or tsid[-1] == "-":
         # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html
         raise ValueError(f"Invalid snapshot id generated from format - {tsid}")
+
+    if state["kms"] and orig_db["DBInstanceClass"] in ["db.m1.small", "db.m1.medium", "db.m1.large", "db.m1.xlarge",
+                                                       "db.m2.xlarge", "db.m2.2xlarge", "db.m2.4xlarge", "db.t2.micro"]:
+        # https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Overview.Encryption.html
+        raise ValueError("Instance type doesn't support encryption.")
 
 
 @state_function("FindLatestSnapshot")
@@ -98,6 +104,7 @@ def take_final_snapshot(state, uid):
 
 @state_function("WaitForSnapshot")
 @state_function("WaitForFinalSnapshot")
+@state_function("WaitForEncrypt")
 def wait_for_snapshot(state, uid):
     snapshot = rds_client.describe_db_snapshots(DBSnapshotIdentifier=state["snapshot_id"])["DBSnapshots"][0]
     status = snapshot["Status"]
@@ -105,6 +112,19 @@ def wait_for_snapshot(state, uid):
         return
     _check_status(status)
     raise NotReady()
+
+
+@state_function("Encrypt")
+def encrypt(state, uid):
+    old_snapshot_id = state["snapshot_id"]
+    state["snapshot_id"] = state["temp_snapshot_id2"]
+
+    rds_client.copy_db_snapshot(
+        SourceDBSnapshotIdentifier=old_snapshot_id,
+        TargetDBSnapshotIdentifier=state["snapshot_id"],
+        KmsKeyId=state["kms"],
+        Tags=_tags(uid),
+    )
 
 
 @state_function("CreateTempDatabase")
@@ -141,7 +161,7 @@ def set_temp_password(state, uid):
         "port": str(db["Endpoint"]["Port"]),
         "user": db["MasterUsername"],
         "password": secrets.token_hex(32),
-        "database": db["DBName"],
+        "database": db.get("DBName", ""),
     }
 
     rds_client.modify_db_instance(

@@ -45,7 +45,8 @@ def validate_subnets(ctx, param, value):
 @click.option("--share-account", help="AWS account identifiers to share snapshots with", multiple=True)
 @click.option("--new-snapshot", help="Take a new snapshot instead of using the latest available", is_flag=True)
 @click.option("--snapshot_format", help="Snapshot name snapshot_format")
-def deploy(profile, stack_name, database, vpc, subnet, sql, share_account, new_snapshot, snapshot_format):
+@click.option("--kms", help="KMS ARN to encrypt snapshots")
+def deploy(profile, stack_name, database, vpc, subnet, sql, share_account, new_snapshot, snapshot_format, kms):
     # this is more for testing and not really for user consumption...
     stack_template = generate_main_template()
 
@@ -85,10 +86,14 @@ def deploy(profile, stack_name, database, vpc, subnet, sql, share_account, new_s
 
     if snapshot_format:
         parameters.append({
-            {
-                "ParameterKey": "SnapshotFormat",
-                "ParameterValue": snapshot_format,
-            }
+            "ParameterKey": "SnapshotFormat",
+            "ParameterValue": snapshot_format,
+        })
+
+    if kms:
+        parameters.append({
+            "ParameterKey": "KMS",
+            "ParameterValue": kms,
         })
 
     if _stack_exists(cf, stack_name):

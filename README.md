@@ -23,6 +23,7 @@ The step function does the following to create the snapshot:
  1. Get a snapshot of the given database by either:
     * Finding the latest snapshot for the given database
     * Creating and waiting for a new fresh snapshot
+ 1. Re-encrypt snapshot if KMS key is supplied
  1. Create a temporary database from the snapshot
  1. Wait for the database to be ready
  1. Reset the master password on the temporary database to a random password
@@ -50,12 +51,16 @@ and deploy it as you normally would from the terminal or in the AWS CloudFormati
 | Sanitization SQL statements | SQL statement used to sanitize the temporary database. Use this to remove any data you don't want in the final snapshot, or the trim the data for size. You can separate multiple statements with a semicolon. |
 | List of AWS accounts to share snapshot with | A comma-separated list of AWS accounts to share the final snapshot with. These accounts will see the snapshot under the "Shared with me" tab in the RDS console. |
 | Snapshot name format | Final snapshot name format. A new snapshot will be created periodically, so this should contain the date to provide uniqueness. Make sure it follows the [naming rules of AWS](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html). |
+| KMS key id | Re-encrypt the snapshot with a different key. If left empty, it will be encrypted with the same key used for the original database. |
 | Network | Network parameters are required to create the temporary database. Make sure to select at least two subnets that are associated with the selected VPC |
 
 ### Encryption
 
 The new snapshot will be encrypted with the same key used by the original database. If the original database wasn't
-encrypted, the snapshot won't be encrypted either.
+encrypted, the snapshot won't be encrypted either. To add another step that changes the key, use the KMS key parameter.
+
+See [AWS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ShareSnapshot.html) for instructions
+on giving other accounts access to the key.
 
 ### Known Limitations
 
