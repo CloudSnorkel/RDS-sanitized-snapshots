@@ -52,11 +52,15 @@ and deploy it as you normally would from the terminal or in the AWS CloudFormati
 | Snapshot name format | Final snapshot name format. A new snapshot will be created periodically, so this should contain the date to provide uniqueness. Make sure it follows the [naming rules of AWS](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/CHAP_Limits.html). |
 | Network | Network parameters are required to create the temporary database. Make sure to select at least two subnets that are associated with the selected VPC |
 
+### Encryption
+
+The new snapshot will be encrypted with the same key used by the original database. If the original database wasn't
+encrypted, the snapshot won't be encrypted either.
+
 ### Known Limitations
 
 * The chosen VPC and subnet must have internet access for Fargate to be able to download the right Docker image used to
   connect to the temporary database.
-* Encrypted snapshots are not supported yet.
 * Database clusters are not supported yet.
 * Only PostgreSQL, MySQL and MariaDB are supported for now.
 
@@ -65,3 +69,12 @@ and deploy it as you normally would from the terminal or in the AWS CloudFormati
 * Check the status of the state machine for the step function. Click on the failed step and check out the input, output
   and exception.
 * Look for sanitization errors in CloudWatch log group `<MY STACK NAME>-SanitizerLogs-<RANDOM>`
+
+### Building from Source
+
+To build the template from source code:
+
+ 1. Install Python 3.7
+ 1. `pip install pipenv`
+ 1. `pipenv install`
+ 1. `pipenv run python gen-cfm.py --output my-new-template.yml`
