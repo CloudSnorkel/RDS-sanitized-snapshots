@@ -79,7 +79,7 @@ on giving other accounts access to the key.
 
 To build the template from source code:
 
- 1. Install Python 3.7
- 1. `pip install pipenv`
- 1. `pipenv install`
- 1. `pipenv run python gen-cfm.py --output my-new-template.yml`
+ 1. Install Python 3.10
+ 1. `pip install poetry`
+ 1. `poetry install`
+ 1. `poetry run python gen-cfm.py --output my-new-template.yml`

@@ -15,12 +15,12 @@ jobs:
           python-version: 3.7
       - name: Dependencies
         run: |
-          pip install pipenv
-          pipenv install
+          pip install poetry
+          poetry install
       - name: Build
         run: |
           mkdir -p dist
-          pipenv run python gen-cfm.py gen
+          poetry run python gen-cfm.py gen
       - name: Upload dist
         uses: actions/upload-artifact@v1
         with:
