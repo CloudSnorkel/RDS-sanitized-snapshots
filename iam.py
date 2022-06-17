@@ -19,6 +19,7 @@ HANDLER_POLICIES = [
                         "rds:DescribeDBInstances",
                         "rds:DescribeDBSnapshots",
                         "rds:CreateDBSnapshot",
+                        "rds:AddTagsToResource",
                     ],
                     "Resource": [
                         troposphere.Sub(
