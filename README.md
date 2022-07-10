@@ -1,3 +1,5 @@
+# REPLACED BY https://github.com/CloudSnorkel/cdk-rds-sanitized-snapshots
+
 ## AWS RDS Sanitized Snapshots
 
 Periodically take snapshots of RDS databases, sanitize them, and share with selected accounts.
